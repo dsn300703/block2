@@ -1,0 +1,793 @@
+
+#include <iostream>
+#include <iomanip>
+#include <fstream>
+#include <math.h>
+
+using namespace std;
+
+const int N = 1000;
+const int N2 = 100000;
+
+int kolt(fstream& f, int row)
+{
+	
+	char* str = new char[N]; row = 0;
+	int i = 0;
+	while (!f.eof())
+	{
+		f.getline(str, 1024, '\n');
+		i++;
+	}
+	delete[]str;
+	row = i;
+	
+	return row;
+}
+
+int InpArr(fstream& f, fstream &prt, fstream &f1, double x[N], double y[N], int row)
+{
+	for (int i = 0; i < row; i++)
+	{
+		f >> x[i];
+		f >> y[i];
+		cout << "Точка " << i << ": ( " << x[i] << " ; " << y[i] << " )\n";
+		prt << "Точка " << i << ": ( " << x[i] << " ; " << y[i] << " )\n";
+		f1 << "Точка " << i << ": ( " << x[i] << " ; " << y[i] << " )\n";
+	}
+	prt << endl;
+	f1 << endl;
+	return 0;
+}
+
+int analyze(fstream &prt, double* x, double* y, unsigned row, double x1[], double x2[], double x3[], double x4[], double y1[], double y2[], double y3[], double y4[], int long h)
+{
+	double **razX = new double* [N2];
+	double **razY = new double* [N2];
+	double **dl = new double* [N2];
+	for (int i = 0; i < N; i++)
+	{
+		razX[i] = new double[N];
+		razY[i] = new double[N];
+		dl[i] = new double[N];
+	}
+
+	for (int i = row - 1; i >= 0; i--)
+	{
+		for (int j = row - 1; j >= 0; j--)
+		{
+			if (j<i)
+			{
+				razX[i][j] = x[i] - x[j];
+				razY[i][j] = y[i] - y[j];
+				dl[i][j] = sqrt(razX[i][j] * razX[i][j] + razY[i][j] * razY[i][j]);
+			}
+		}
+		cout << endl;
+		
+	}
+	
+	float cos1=0;
+	float cos2=0;
+	float cos3=0;
+	float tg1, tg2, c1, c2;
+	h = 0;
+	prt << "Найдем пары точек с равными расстояниями, проверим их параллельность и непринадлежность одной прямой\n\n";
+	for (int i = row - 1; i >= 0; i--)
+	{
+		for (int j = row - 1; j >= 0; j--)
+		{
+			if (i != j)
+			{
+				for (int m = row - 1; m >= 0; m--)
+				{
+					for (int k = row - 1; k >= 0; k--)
+					{
+						if (j < i && m < j && k < m)
+						{
+							prt << "(" << x[i] << ";" << y[i] << ") , (" << x[j] << ";" << y[j] << ")  и  (" << x[m] << ";" << y[m] << ") , (" << x[k] << ";" << y[k] << ")";
+/*----------------------------------------------------------1 случай-------------------------------------------------------------------------------------------------------------------*/
+							if ((dl[i][j] == dl[m][k]) && (dl[i][m] != dl[j][k]))
+							{
+								cos1 = (abs(razX[i][j] * razX[m][k] + razY[i][j] * razY[m][k])) / (sqrt(razX[i][j] * razX[i][j] + razY[i][j] * razY[i][j]) * sqrt(razX[m][k] * razX[m][k] + razY[m][k] * razY[m][k]));
+
+								if (razX[i][j] != 0 && razX[m][k] != 0)
+								{
+									tg1 = razY[i][j] / razX[i][j];
+									tg2 = razY[m][k] / razX[m][k];
+									c1 = y[i] - tg1 * x[i];
+									c2 = y[m] - tg2 * x[m];
+
+								}
+								else
+								{
+									c1 = x[i];
+									c2 = x[m];
+								}
+								if (cos1 == 1.0 && c1 != c2)
+								{
+									prt << "- из этих пар точек МОЖНО построить параллелограмм: \n";
+									x1[h] = x[i]; y1[h] = y[i];
+									x2[h] = x[j]; y2[h] = y[j];
+									x3[h] = x[m]; y3[h] = y[m];
+									x4[h] = x[k]; y4[h] = y[k];
+									h++;
+								}
+								else prt << " - отрезки из данных пар точек не параллельны друг другу или принадлежат одной прямой\n";
+							}
+							else prt << "- oтрезки из пар точек имеют разную длину\n";
+/*--------------------------------------------------------------2 cлучай------------------------------------------------------------------------------------------*/
+							
+							if ((dl[i][j] == dl[m][k]) && (dl[i][k] != dl[j][m]))
+							{
+								cos2 = abs(razX[i][j] * razX[m][k] + razY[i][j] * razY[m][k]) / (dl[i][j] * dl[m][k]);
+								prt << "(" << x[i] << ";" << y[i] << ") , (" << x[j] << ";" << y[j] << ")  и  (" << x[k] << ";" << y[k] << ") , (" << x[m] << ";" << y[m] << ")";
+								if (razX[i][j] != 0 && razX[m][k] != 0)
+								{
+									tg1 = razY[i][j] / razX[i][j];
+									tg2 = razY[m][k] / razX[m][k];
+									c1 = y[i] - tg1 * x[i];
+									c2 = y[m] - tg2 * x[m];
+
+								}
+								else
+								{
+									c1 = x[i];
+									c2 = x[m];
+								}
+
+								if (cos2 == 1.0 && c1 != c2)
+								{
+									prt << "- из этих пар точек МОЖНО построить параллелограмм: \n";
+									x1[h] = x[i]; y1[h] = y[i];
+									x2[h] = x[j]; y2[h] = y[j];
+									x3[h] = x[k]; y3[h] = y[k];
+									x4[h] = x[m]; y4[h] = y[m];
+									h++;
+								}
+								
+							}
+							
+/*-------------------------------------------------------------3 cлучай---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+							prt << "(" << x[i] << ";" << y[i] << ") , (" << x[k] << ";" << y[k] << ")  и  (" << x[j] << ";" << y[j] << ") , (" << x[m] << ";" << y[m] << ")";
+							if ((dl[i][k] == dl[j][m]) && (dl[i][j] != dl[m][k]))
+							{
+								cos3 = abs(razX[i][k] * razX[j][m] + razY[i][k] * razY[j][m]) / (dl[i][k] * dl[j][m]);
+
+								if (razX[i][m] != 0 && razY[j][k] != 0)
+								{
+									tg1 = razY[i][m] / razX[i][m];
+									tg2 = razY[j][k] / razX[j][k];
+									c1 = y[i] - tg1 * x[i];
+									c2 = y[j] - tg2 * x[j];
+								}
+								else
+								{
+									c1 = x[i];
+									c2 = x[j];
+								}
+
+								if (cos3 == 1.0 && c1 != c2)
+								{
+									prt << "- из этих пар точек МОЖНО построить параллелограмм: \n";
+									x1[h] = x[i]; y1[h] = y[i];
+									x2[h] = x[m]; y2[h] = y[m];
+									x3[h] = x[j]; y3[h] = y[j];
+									x4[h] = x[k]; y4[h] = y[k];
+									h++;	
+								}
+								else prt << " - отрезки из данных пар точек не параллельны друг другу или принадлежат одной прямой\n";
+							}	
+							else prt << "- oтрезки из пар точек имеют разную длину\n";
+						}
+					}	
+				}
+			}
+		}	
+	}
+	delete[]razX;
+	delete[]razY;
+	delete[]dl;
+	return h;
+}
+
+
+void itog(fstream& prt, fstream& f1, double x[], double y[],unsigned row,double x1[], double x2[], double x3[], double x4[], double y1[], double y2[], double y3[], double y4[], int h)
+{
+
+	double* tg12 = new double[N2];
+	double* tg23 = new double[N2];
+	double* tg34 = new double[N2];
+	double* tg41 = new double[N2];
+	int k;
+	double* c12 = new double[N2];
+	double* c23 = new double[N2];
+	double* c34 = new double[N2];
+	double* c41 = new double[N2];
+	double* kol = new double[N2];
+	double** tx = new double* [N2];
+	double** ty = new double* [N2];
+	for (int i = 0; i < N; i++)
+	{
+		tx[i] = new double[N];
+		ty[i] = new double[N];
+	}
+	k = 0;
+	for (int i = 0; i < N2; i++) kol[i] = 0;
+	for (int i = 0; i < h; i++)
+	{
+		if (x1[i] - x2[i] != 0)
+		{
+			tg12[i] = (y1[i] - y2[i]) / (x1[i] - x2[i]);
+			c12[i] = y1[i] - tg12[i] * x1[i];
+		}
+		else
+		{
+			c12[i] = x1[i];
+			tg12[i] = 5;
+		}
+/*------------------------------------------------------------------------------------------------------------------------------------------------ -*/
+		if (x2[i] - x3[i] != 0)
+		{
+			tg23[i] = (y2[i] - y3[i]) / (x2[i] - x3[i]);
+			c23[i] = y2[i] - tg23[i] * x2[i];
+		}
+		else
+		{
+			c23[i] = x2[i];
+			tg23[i] = 5;
+		}
+		
+/*-------------------------------------------------------------------------------------------------------------------------------------------*/
+		if (x3[i] - x4[i] != 0)
+		{
+			tg34[i] = tg12[i];
+			c34[i] = y3[i] - tg34[i] * x3[i];
+		}
+		else
+		{
+			c34[i] = x3[i];
+			tg34[i] = 5;
+		}
+/*------------------------------------------------------------------------------------------------------------------------------------------ - */
+		if (x4[i] - x1[i] != 0)
+		{
+			tg41[i] = tg23[i];
+			c41[i] = y4[i] - tg41[i] * x4[i];
+		}
+		else
+		{
+			c41[i] = x4[i];
+			tg41[i] = 5;
+		}
+/*-------------------------------------------------------------------------------------------------------------------------------------------------------------- - */
+		k = 0;
+		for (int j = 0; j < row; j++)
+		{
+			if (tg12[i] >= 0)
+			{
+				if (tg12[i] == 5)
+				{
+					if (tg23[i] >= 0)
+					{
+						if (c12[i] >= c34[i])
+						{
+							if (c23[i] >= c41[i])
+							{
+								if (x[j] > x3[i] && x[j]<x1[i] && y[j]>tg41[i] * x[j] + c41[i] && y[j] < tg23[i] * x[j] + c23[i])
+								{
+									kol[i]++; 
+									tx[i][k] = x[j];
+									ty[i][k] = y[j];
+									k++;
+								}
+							}
+							else
+							{
+								if (x[j] > x3[i] && x[j]<x2[i] && y[j] > tg23[i] * x[j] + c23[i] && y[j] < tg41[i] * x[j] + c41[i])
+								{
+									kol[i]++; 
+									tx[i][k] = x[j];
+									ty[i][k] = y[j];
+									k++;
+								}
+							}
+						}
+						else
+						{
+							if (c23[i] >= c41[i])
+							{
+								if (x[j] > x1[i] && x[j]<x3[i] && y[j]>tg41[i] * x[j] + c41[i] && y[j] < tg23[i] * x[j] + c23[i])
+								{
+									kol[i]++;
+									tx[i][k] = x[j];
+									ty[i][k] = y[j];
+									k++;
+								}
+							}
+							else 
+							{
+								if (x[j] > x1[i] && x[j]<x3[i] && y[j]>tg23[i] * x[j] + c23[i] && y[j] < tg41[i] * x[j] + c41[i])
+								{
+									kol[i]++; 
+									tx[i][k] = x[j];
+									ty[i][k] = y[j];
+									k++;
+								}
+							}
+						}
+
+					}
+					else
+					{
+						if (c12[i] >= c34[i])
+						{
+							if (c23[i] >= c41[i]) 
+							{
+								if (x[j] > x3[i] && x[j]<x2[i] && y[j]>tg41[i] * x[j] + c41[i] && y[j] < tg23[i] * x[j] + c23[i])
+								{
+									kol[i]++; 
+									tx[i][k] = x[j];
+									ty[i][k] = y[j];
+									k++;
+								}
+							}
+							else
+							{ 
+								if (x[j] > x3[i] && x[j] < x2[i] && y[j]>tg23[i] * x[j] + c23[i] && y[j] < tg41[i] * x[j] + c41[i])
+								{
+									kol[i]++; 
+									tx[i][k] = x[j];
+									ty[i][k] = y[j];
+									k++;
+								}
+							}
+						}
+						else
+						{
+							if (c23[i] >= c41[i])
+							{ 
+								if (x[j] > x1[i] && x[j]<x3[i] && y[j]>tg41[i] * x[j] + c41[i] && y[j] < tg23[i] * x[j] + c23[i])
+								{
+									kol[i]++; 
+									tx[i][k] = x[j];
+									ty[i][k] = y[j];
+									k++;
+								}
+							}
+							else 
+							{
+								if (x[j] > x1[i] && x[j] < x3[i] && y[j]>tg23[i] * x[j] + c23[i] && y[j] < tg41[i] * x[j] + c41[i])
+								{
+									kol[i]++; 
+									tx[i][k] = x[j];
+									ty[i][k] = y[j];
+									k++;
+								}
+							}
+						}
+
+					}
+				}
+				else
+				{
+					if (tg23[i] >= 0)
+					{
+						if (tg23[i] == 5)
+						{
+							if (c12[i] >= c34[i])
+							{
+								if (c23[i] >= c41[i]) 
+								{
+									if (x[j] > x4[i] && x[j]<x2[i] && y[j]>tg34[i] * x[j] + c34[i] && y[j] < tg12[i] * x[j] + c12[i])
+									{
+										kol[i]++; 
+										tx[i][k] = x[j];
+										ty[i][k] = y[j];
+										k++;
+									}
+								}
+								else 
+								{ 
+									if (x[j] > x2[i] && x[j]<x1[i] && y[j]>tg34[i] * x[j] + c34[i] && y[j] < tg12[i] * x[j] + c12[i])
+									{
+										kol[i]++; 
+										tx[i][k] = x[j];
+										ty[i][k] = y[j];
+										k++;
+									}
+								}
+							}
+							else
+							{
+								if (c23[i] >= c41[i])
+								{ 
+									if (x[j] > x1[i] && x[j]<x2[i] && y[j]>tg12[i] * x[j] + c12[i] && y[j] < tg34[i] * x[j] + c34[i])
+									{
+										kol[i]++; 
+										tx[i][k] = x[j];
+										ty[i][k] = y[j];
+										k++;
+									}
+								}
+								else 
+								{ 
+									if (x[j] > x2[i] && x[j]<x1[i] && y[j]>tg12[i] * x[j] + c12[i] && y[j] < tg34[i] * x[j] + c34[i])
+									{
+										kol[i]++; 
+										tx[i][k] = x[j];
+										ty[i][k] = y[j];
+										k++;
+									}
+								}
+							}
+						}
+						else
+						{
+							if (c12[i] >= c34[i])
+							{
+								if (c23[i] >= c41[i]) 
+								{ 
+									if (y[j] > tg41[i] * x[j] + c41[i] && y[j] < tg23[i] * x[j] + c23[i] && y[j]<tg12[i] * x[j] + c12[i] && y[j] > tg34[i] * x[j] + c34[i])
+									{
+										kol[i]++; 
+										tx[i][k] = x[j];
+										ty[i][k] = y[j];
+										k++;
+									}
+								}
+								else 
+								{ 
+									if (y[j] > tg23[i] * x[j] + c23[i] && y[j] < tg41[i] * x[j] + c41[i] && y[j]<tg12[i] * x[j] + c12[i] && y[j] >tg34[i] * x[j] + c34[i])
+									{
+										kol[i]++; 
+										tx[i][k] = x[j];
+										ty[i][k] = y[j];
+										k++;
+									}
+								}
+							}
+							else
+							{
+								if (c23[i] >= c41[i])
+								{ 
+									if (y[j] > tg12[i] * x[j] + c12[i] && y[j] < tg34[i] * x[j] + c34[i] && y[j]<tg23[i] * x[j] + c23[i] && y[j]>tg41[i] * x[j] + c41[i])
+									{
+										kol[i]++; 
+										tx[i][k] = x[j];
+										ty[i][k] = y[j];
+										k++;
+									}
+								}
+								else 
+								{ 
+									if (y[j] > tg12[i] * x[j] + c12[i] && y[j] < tg34[i] * x[j] + c34[i] && y[j]<tg41[i] * x[j] + c41[i] && y[j]>tg23[i] * x[j] + c23[i])
+									{
+										kol[i]++; 
+										tx[i][k] = x[j];
+										ty[i][k] = y[j];
+										k++;
+									}
+								}
+							}
+						}
+					}
+					else
+					{
+						if (c12[i] >= c34[i])
+						{
+							if (c23[i] >= c41[i])
+							{ 
+								if (y[j] > tg41[i] * x[j] + c41[i] && y[j] < tg12[i] * x[j] + c12[i] && y[j] < tg23[i] * x[j] + c23[i] && y[j] > tg34[i] * x[j] + c34[i])
+								{
+									kol[i]++; 
+									tx[i][k] = x[j];
+									ty[i][k] = y[j];
+									k++;
+								}
+							}
+							else 
+							{ 
+								if (y[j] > tg23[i] * x[j] + c23[i] && y[j] > tg34[i] * x[j] + c34[i] && y[j] < tg12[i] * x[j] + c12[i] && y[j] < tg41[i] * x[j] + c41[i])
+								{
+									kol[i]++; 
+									tx[i][k] = x[j];
+									ty[i][k] = y[j];
+									k++;
+								}
+							}
+						}
+						else
+						{
+							if (c23[i] >= c41[i]) 
+							{
+								if (y[j] > tg41[i] * x[j] + c41[i] && y[j] > tg12[i] * x[j] + c12[i] && y[j] < tg34[i] * x[j] + c34[i] && y[j] < tg23[i] * x[j] + c23[i])
+								{
+									kol[i]++; 
+									tx[i][k] = x[j];
+									ty[i][k] = y[j];
+									k++;
+								}
+								
+							}
+							else 
+							{ 
+								if (y[j] > tg12[i] * x[j] + c12[i] && y[j] > tg23[i] * x[j] + c23[i] && y[j] < tg34[i] * x[j] + c34[i] && y[j] < tg41[i] * x[j] + c41[i])
+								{
+									kol[i]++; 
+									tx[i][k] = x[j];
+									ty[i][k] = y[j];
+									k++;
+								}
+							}
+						}
+					}
+				}
+			}
+			else
+			{
+				if (tg23[i] >= 0)
+				{
+					if (tg23[i] == 5)
+					{
+						if (c12[i] >= c34[i])
+						{
+							if (c23[i] >= c41[i]) 
+							{ 
+								if (x[j] > x4[i] && x[j]<x2[i] && y[j]>tg34[i] * x[j] + c34[i] && y[j] < tg12[i] + c12[i])
+								{
+									kol[i]++; 
+									tx[i][k] = x[j];
+									ty[i][k] = y[j];
+									k++;
+								}
+							}
+							else 
+							{ 
+								if (x[j] > x3[i] && x[j]<x1[i] && y[j]>tg34[i] * x[j] + c34[i] && y[j] < tg12[i] * x[j] + c12[i])
+								{
+									kol[i]++; 
+									tx[i][k] = x[j];
+									ty[i][k] = y[j];
+									k++;
+								}
+							}
+						}
+						else
+						{
+							if (c23[i] >= c41[i]) 
+							{ 
+								if (x[j] > x1[i] && x[j]<x2[i] && y[j]>tg12[i] * x[i] + c12[i] && y[j] < tg34[i] * x[j] + c34[i])
+								{
+									kol[i]++; 
+									tx[i][k] = x[j];
+									ty[i][k] = y[j];
+									k++;
+								}
+							}
+							else 
+							{ 
+								if (x[j] > x2[i] && x[j]<x4[i] && y[j]>tg12[i] * x[j] + c12[i] && y[j] < tg34[i]*x[j] + c34[i])
+								{
+									kol[i]++; 
+									tx[i][k] = x[j];
+									ty[i][k] = y[j];
+									k++;
+								}
+							}
+						}
+					}
+					else
+					{
+						if (c12[i] >= c34[i])
+						{
+							//cout << "( " << x[j] << " ; " << y[j] << " )" << endl;
+							if (c23[i] >= c41[i]) 
+							{ 
+								if (y[j] > tg12[i] * x[j] + c12[i] && y[j] > tg41[i] * x[j] + c41[i] && y[j] < tg23[i] * x[j] + c23[i] && y[j] < tg34[i] * x[j] + c34[i])
+								{
+									kol[i]++; 
+									tx[i][k] = x[j];
+									ty[i][k] = y[j];
+									k++;
+								}
+							}
+							else 
+							{
+								if (y[j] > tg34[i] * x[j] + c34[i] && y[j] > tg23[i] * x[j] + c23[i] && y[j] < tg12[i] * x[j] + c12[i] && y[j] < tg41[i] * x[j] + c41[i])
+								{
+									kol[i]++; 
+									tx[i][k] = x[j];
+									ty[i][k] = y[j];
+									k++;
+								}
+							}
+						}
+						else
+						{
+							if (c23[i] >= c41[i]) 
+							{ 
+								if (y[j] > tg34[i] * x[j] + c34[i] && y[j] > tg41[i] * x[j] + c41[i] && y[j] < tg23[i] * x[j] + c23[i] && y[j] < tg12[i] * x[j] + c12[i])
+								{
+									kol[i]++; 
+									tx[i][k] = x[j];
+									ty[i][k] = y[j];
+									k++;
+								}
+							}
+							else 
+							{ 
+								if (y[j] < tg34[i] * x[j] + c34[i] && y[j] > tg23[i] * x[j] + c23[i] && y[j] > tg12[i]*x[j] + c12[i] && y[j] < tg41[i] * x[j] + c41[i])
+								{
+									
+									kol[i]++; 
+									tx[i][k] = x[j];
+									ty[i][k] = y[j];
+									k++;
+								}
+							}
+						}
+					}
+				}
+				else
+				{
+					if (c12[i] >= c34[i])
+					{
+						if (c23[i] >= c41[i]) 
+						{ 
+							if (y[j] > tg41[i] * x[j] + c41[i] && y[j] > tg34[i] * x[j] + c34[i] && y[j] < tg23[i] * x[j] + c23[i] && y[j] < tg12[i] * x[j] + c12[i])
+							{
+								kol[i]++; 
+								tx[i][k] = x[j];
+								ty[i][k] = y[j];
+								k++;
+							}
+						}
+						else 
+						{ 
+							if (y[j] > tg23[i] * x[j] + c23[i] && y[j] > tg34[i] * x[j] + c34[i] && y[j] < tg12[i] * x[j] + c12[i] && y[j] < tg41[i] * x[j] + c41[i])
+							{
+								kol[i]++; 
+								tx[i][k] = x[j];
+								ty[i][k] = y[j];
+								k++;
+							}
+						}
+					}
+					else
+					{
+						if (c23[i] >= c41[i])
+						{
+							if (y[j] > tg12[i] * x[j] + c12[i] && y[j] > tg23[i] * x[j] + c23[i] && y[j] < tg41[i] * x[j] + c41[i] && y[j] < tg34[i] * x[j] + c23[i])
+							{
+								kol[i]++; 
+								tx[i][k] = x[j];
+								ty[i][k] = y[j];
+								k++;
+							}
+						}
+						else
+						{
+							if (y[j] > tg23[i] * x[j] + c23[i] && y[j] > tg12[i] * x[j] + c12[i] && y[j] < tg34[i] * x[j] + c34[i] && y[j] < tg41[i] * x[j] + c41[i])
+							{
+								kol[i]++; 
+								tx[i][k] = x[j];
+								ty[i][k] = y[j];
+								k++;
+							}
+						}
+					}
+				}
+			}
+
+		}
+	}
+	double max = -1.7e+308;
+	if (h != 0)
+	{
+		prt << "\n\n\nТочки, из которых может быть построен параллелограмм:\n\n";
+		for (int i = 0; i < h; i++)
+		{
+			prt << "Параллелограмму с вершинами принадлежит точек : " << kol[i] << endl;
+			prt << "( " << x1[i] << " ; " << y1[i] << " )" << endl;
+			prt << "( " << x2[i] << " ; " << y2[i] << " )" << endl;
+			prt << "( " << x3[i] << " ; " << y3[i] << " )" << endl;
+			prt << "( " << x4[i] << " ; " << y4[i] << " )" << endl;
+			if (kol[i] != 0) prt << "Принадлежащие точки: \n";
+			for (int j = 0; j < kol[i]; j++)
+			{
+				prt << "( " << tx[i][j] << " ; " << ty[i][j] << " )" << endl;
+			}
+			prt << endl;
+			if (kol[i] > max) max = kol[i];
+		}
+		
+		if (max != 0)
+		{
+			f1 << "Параллелограмм(-ы), содержащий(-ие) максимальное количество точек:\n";
+			
+				for (int i = 0; i < h; i++)
+				{
+					if (kol[i] == max)
+					{
+						f1 << "( " << x1[i] << " ; " << y1[i] << " )" << endl;
+						f1 << "( " << x2[i] << " ; " << y2[i] << " )" << endl;
+						f1 << "( " << x3[i] << " ; " << y3[i] << " )" << endl;
+						f1 << "( " << x4[i] << " ; " << y4[i] << " )" << endl;
+						f1 << "Точек принадлежит: " << kol[i] << "\nПринадлежащие точки: \n";
+						if (kol[i] != 0) 
+						for (int j = 0; j < kol[i]; j++) f1 << "( " << tx[i][j] << " ; " << ty[i][j] << " )" << endl;
+					}
+					f1 << endl;
+				}
+			
+		}
+		else { f1 << "Ни один параллелограмм не содержит точек\n"; }
+	}
+	else
+	{
+		prt << "Параллелограмм из этих точек не может быть построен\n";
+		f1 << "Параллелограмм из этих точек не может быть построен\n";
+	}
+	delete[]tg12;
+	delete[]tg23;
+	delete[]tg34;
+	delete[]tg41;
+	delete[]c12;
+	delete[]c23;
+	delete[]c34;
+	delete[]c41;
+	delete[]kol;
+	delete[]tx;
+	delete[]ty;
+}
+
+int main()
+{
+	setlocale(LC_ALL, "ru");
+	cout << "           КУРСОВАЯ РАБОТА\nАвтор: Ражапов Денис Вадитович\nГруппа:1302\n Дата разработки: 20.12.2021\nФормулировка: найти среди N точек такие, которые являются вершинами параллелограмма, содержащего максимальное количество заданных точек \n\n";
+	fstream f, f1, prt;
+	int h=0;
+	double *x1 = new double[N2];
+	double* x2 = new double[N2];
+	double* x3 = new double[N2];
+	double* x4 = new double[N2];
+	double* y1 = new double[N2];
+	double* y2 = new double[N2];
+	double* y3 = new double[N2];
+	double* y4 = new double[N2];
+	int row = 0;
+	f.open("in.txt", ios::in);
+
+		row = kolt(f, row);
+	f.close();
+	double *x = new double[row];
+	double *y = new double[row];
+	
+	f1.open("out.txt", ios::out);
+	prt.open("protocol.txt", ios::out);
+	prt << setw(15) << "ПРОТОКОЛ\nАвтор: Ражапов Денис Вадитович\nГруппа:1302\n Дата разработки: 20.12.2021\nФормулировка: найти среди N точек такие, которые являются вершинами параллелограмма, содержащего максимальное количество заданных точек\n\n";
+	f1 << "           КУРСОВАЯ РАБОТА\nАвтор: Ражапов Денис Вадитович\nГруппа:1302\n Дата разработки: 20.12.2021\nФормулировка: найти среди N точек такие, которые являются вершинами параллелограмма, содержащего максимальное количество заданных точек\n\n";
+	f.open("in.txt", ios::in);
+		InpArr(f, prt, f1, x,y,row);
+	f.close();
+	
+
+	h=analyze(prt, x, y, row, x1, x2, x3, x4, y1, y2, y3, y4, h);
+	itog(prt, f1, x, y, row, x1, x2, x3, x4, y1, y2, y3, y4, h);
+	
+	prt.close();
+	f1.close();
+	delete[]x;
+	delete[]y;
+	delete[]x1;
+	delete[]x2;
+
+	delete[]x3;
+	delete[]x4;
+	delete[]y1;
+	delete[]y2;
+	delete[]y3;
+	delete[]y4;
+	return 0;
+}
